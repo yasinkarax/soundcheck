@@ -1,37 +1,114 @@
 # Soundcheck
 
-A native macOS menu bar app for controlling each app’s volume independently, with per-app mute and lightweight Core Audio processing. Discover apps playing audio, adjust each app from 0–100%, and mute individually. Output follows the system default; no output routing UI.
+**Turn down one app without turning down your whole Mac.**
 
-## Build and run
+Soundcheck is a small app that lives in your Mac’s menu bar. It gives each app its own volume slider and mute button—similar to the Windows volume mixer.
 
-Requires macOS 14.2+ and Apple’s Swift command line tools.
+For example, you can lower your music, keep a video louder, or mute one app while the others keep playing.
+
+## What you need
+
+- A Mac running **macOS 14.2 or later**.
+- Speakers or headphones with stereo output. Some audio devices are not supported yet.
+
+Soundcheck is an early version. There is no ready-to-download installer provided in this repository yet. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, follow **Build the app** at the end of this page.
+
+## Using Soundcheck
+
+1. Open **Soundcheck.app**. Look for the **sliders icon** in the menu bar at the top of your screen—it does not open a regular app window.
+2. Click that icon, then click **Enable app volume control**.
+3. Play music or a video in another app. It should appear in Soundcheck within a few seconds.
+4. Move the slider next to an app to change its volume. Click its speaker button to mute or unmute it.
+5. If macOS asks for permission to access system audio, allow it so Soundcheck can adjust the sound.
+
+### What the buttons do
+
+- **Volume slider:** adjusts that app from 0% to 100%. It does not boost audio above its normal volume.
+- **Speaker button:** mutes or unmutes just that app.
+- **Reset volumes:** clears Soundcheck’s adjustments and unmutes all apps controlled by Soundcheck.
+- **Turn off:** stops controlling audio and restores normal playback.
+- **Quit:** closes Soundcheck and restores normal playback.
+
+Soundcheck uses your Mac’s current speakers or headphones. It does not choose a different output for each app.
+
+## Why does it ask for audio recording permission?
+
+Soundcheck needs access to an app’s sound to change its volume. macOS calls this audio recording access, even though **Soundcheck does not save recordings or upload your audio**. All audio processing happens on your Mac.
+
+If you denied access, open **System Settings → Privacy & Security** and look for **Screen & System Audio Recording** or **System Audio Recording**. The wording depends on your macOS version. Allow Soundcheck, then quit and reopen it if prompted.
+
+## If something is not working
+
+**An app is missing**
+
+Start playing sound in that app and wait a few seconds. Soundcheck shows apps that are playing audio, along with apps you have already adjusted.
+
+**The slider does not change the sound**
+
+Make sure Soundcheck is enabled and has audio access. Check any error message shown in Soundcheck.
+
+**My headphones or speakers are not supported**
+
+Try your Mac’s built-in speakers. This early version supports a limited set of stereo audio layouts.
+
+**One app appears more than once**
+
+Some apps use separate background processes for audio. These can appear as separate entries. Browser tabs may share one volume control.
+
+**My volume settings disappeared**
+
+Settings are kept only while Soundcheck is running. They are not saved when you quit.
+
+**I changed speakers and the volume briefly changed**
+
+Soundcheck follows your Mac’s output device. It may take a few seconds to apply your adjustments again after a change.
+
+## Build the app
+
+This section is for people comfortable using **Terminal**. You only need to build the app once to try it, and again when you want a newer version.
+
+### 1. Install Apple’s developer tools
+
+Open **Terminal** from Applications → Utilities, paste this command, and press Return:
 
 ```sh
+xcode-select --install
+```
+
+Follow the installation prompts. If the tools are already installed, continue to the next step.
+
+### 2. Download and build Soundcheck
+
+Run these commands one at a time in Terminal:
+
+```sh
+git clone https://github.com/yasinkarax/soundcheck.git
+cd soundcheck
 ./scripts/build-app.sh
+```
+
+Wait for the build to finish. It creates **Soundcheck.app** inside the project’s **dist** folder.
+
+### 3. Open it
+
+```sh
 open dist/Soundcheck.app
 ```
 
-Click the sliders icon in the menu bar, enable control, and play audio in another app. Adjusting its volume may trigger macOS’s system audio recording permission. Allow Soundcheck in System Settings → Privacy & Security → Screen & System Audio Recording if requested. Use the app bundle, not `swift run`, for permission attribution.
+Then follow **Using Soundcheck** above. You can also open the app from Finder.
 
-## Implementation
+The build is intended for local use. A signed, notarized installer for wider distribution is not available yet.
 
-SwiftUI menu bar window; Core Audio process discovery; one private process tap and aggregate device per controlled app. The tap is muted only while being read. A C render callback applies an atomic gain value with a one-buffer ramp, without allocating or locking. Reset, turn off, and quit release taps and restore original playback. Audio never leaves memory; there is no recording or network code.
+## For developers
 
-## Prototype limits
+Soundcheck uses SwiftUI for the menu bar interface and Core Audio process taps for per-app audio control. A C audio callback applies volume changes without allocating memory or taking locks on the audio thread.
 
-- Supports matching stereo float32 input/output stream layouts only. Unsupported devices fail before audio starts.
-- Live permission behavior, audible volume, Bluetooth, and output changes require on-device testing; compilation and DSP tests do not establish these work.
-- Apps with helper processes may appear as multiple entries. Browser tabs share their audio process.
-- Devices and processes refresh every two seconds. Switching outputs can briefly restore original app volume while taps rebuild.
-- Volume choices are session-only. Settings are not saved across launches.
-- Ad-hoc signing is for local development, not distribution. Stable Developer ID signing and notarization remain future work.
-
-## Verification
+Run the audio-processing checks from the project folder:
 
 ```sh
 ./scripts/test-audio.sh
 ```
 
-The standalone C test harness runs with AddressSanitizer and UndefinedBehaviorSanitizer (no full Xcode install needed). DSP tests cover unity gain, attenuation, stereo ramping, mute, invalid gain values, and short input buffers. Manual checks: two apps playing simultaneously, mute/unmute independence, reset/off/quit restoration, permission denial, process restart, and output device changes.
+These checks cover volume changes, mute, invalid values, and short audio buffers, with memory-safety checks enabled. Per-app volume and mute have also been tested by the project owner on their Mac. Compatibility across different Macs, Bluetooth devices, permission states, and output changes still needs broader testing.
 
-Apple API reference: https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps
+[Apple’s documentation on Core Audio taps](https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps)
