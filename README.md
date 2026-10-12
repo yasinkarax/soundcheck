@@ -1,6 +1,6 @@
 # Soundcheck
 
-A native macOS menu bar volume mixer. Discover apps playing audio, adjust each app from 0–100%, and mute individually. Output follows the system default; no output routing UI.
+A native macOS menu bar app for controlling each app’s volume independently, with per-app mute and lightweight Core Audio processing. Discover apps playing audio, adjust each app from 0–100%, and mute individually. Output follows the system default; no output routing UI.
 
 ## Build and run
 
