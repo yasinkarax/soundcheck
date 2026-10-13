@@ -63,10 +63,34 @@ func discoverApps() throws -> [AudioApp] {
             existing.active = existing.active || active
             apps[key] = existing
         } else {
-            apps[key] = AudioApp(id: key, name: running?.localizedName ?? (bundle.isEmpty ? "Audio process \(pid)" : bundle), icon: running?.icon, processes: [object], active: active)
+            let applicationURL = bundle.isEmpty ? nil : NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundle)
+            let outermostAppURL = containingApplicationURL(for: running?.bundleURL ?? applicationURL)
+            let bundleName = outermostAppURL?.deletingPathExtension().lastPathComponent
+            let runningName = running?.localizedName
+            let helperFreeName = runningName?.replacingOccurrences(of: " Helper", with: "")
+            let bundleLeaf = bundle.split(separator: ".").last.map(String.init)
+            let friendlySystemName = bundle == "com.apple.CoreSpeech" ? "Speech Services" : nil
+            let resolvedName = bundleName ?? friendlySystemName
+                ?? helperFreeName.flatMap { $0 == bundle ? nil : $0 }
+                ?? bundleLeaf.map { $0.replacingOccurrences(of: "-", with: " ") }
+                ?? "Audio process \(pid)"
+            let appIcon = outermostAppURL.map { NSWorkspace.shared.icon(forFile: $0.path) }
+            apps[key] = AudioApp(id: key, name: resolvedName, icon: appIcon, processes: [object], active: active)
         }
     }
     return apps.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+}
+
+private func containingApplicationURL(for startURL: URL?) -> URL? {
+    guard var current = startURL else { return nil }
+    var outermostApp: URL?
+    while current.pathComponents.count > 1 {
+        if current.pathExtension == "app" { outermostApp = current }
+        let parent = current.deletingLastPathComponent()
+        guard parent != current else { break }
+        current = parent
+    }
+    return outermostApp
 }
 
 final class GainStorage {

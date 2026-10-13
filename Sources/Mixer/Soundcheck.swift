@@ -6,7 +6,7 @@ import AudioToolbox
 @MainActor
 final class MixerModel: ObservableObject {
     @Published var apps: [AudioApp] = []
-    @Published var enabled = false
+    @Published var enabled = true
     @Published var error: String?
     @Published var outputName = "System output"
     @Published var volumes: [String: Double] = [:]
@@ -121,7 +121,7 @@ struct SoundcheckApp: App {
             MixerView(model: model)
         } label: {
             let image = DesignIcon.image("menu-dial")
-            let _ = { image.size = NSSize(width: 18, height: 18); image.isTemplate = true }()
+            let _ = { image.size = NSSize(width: 18, height: 18); image.isTemplate = false }()
             Image(nsImage: image).accessibilityLabel("Soundcheck")
         }.menuBarExtraStyle(.window)
     }

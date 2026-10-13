@@ -2,9 +2,9 @@ import SwiftUI
 
 // Raw colors from Figma node 2:3587. The requested design is dark-only.
 enum MixerTheme {
-    static let background = Color(red: 0.153, green: 0.165, blue: 0.188)
-    static let master = Color(red: 0.106, green: 0.114, blue: 0.129)
-    static let output = Color(red: 0.200, green: 0.212, blue: 0.235)
+    static let background = Color(red: 0.043, green: 0.059, blue: 0.078)
+    static let surface = Color.white.opacity(0.06)
+    static let output = Color.white.opacity(0.05)
     static let text = Color(red: 0.945, green: 0.949, blue: 0.957)
     static let secondary = Color(red: 0.698, green: 0.714, blue: 0.753)
     static let muted = Color(red: 0.467, green: 0.490, blue: 0.533)
@@ -87,46 +87,24 @@ struct MixerView: View {
                 Spacer()
                 Menu {
                     Button("Reset app volumes") { model.reset() }
-                    Button(model.enabled ? "Turn off app controls" : "Enable app volume control") {
+                    Button(model.enabled ? "Turn off app controls" : "Turn on app controls") {
                         if model.enabled { model.disable() } else { model.enable() }
                     }
                     Divider()
                     Button("Quit Soundcheck") { model.disable(); NSApplication.shared.terminate(nil) }
                 } label: { DesignIcon(name: "settings").frame(width: 24, height: 24) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .buttonStyle(.plain).focusEffectDisabled()
                 .accessibilityLabel("Soundcheck settings")
             }.frame(height: 24)
             masterVolume
-            Button { model.showingOutput.toggle() } label: {
-                HStack(spacing: 9) {
-                    DesignIcon(name: "laptop", size: 17)
-                    Text(model.outputName).font(.system(size: 12)).lineLimit(1)
-                    Spacer(minLength: 0)
-                    DesignIcon(name: "chevron", size: 14)
-                }.padding(.horizontal, 12).frame(height: 40)
-                .background(MixerTheme.output, in: RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(.white.opacity(0.07)))
-            }.buttonStyle(.plain)
-            .accessibilityLabel("Output: \(model.outputName)")
-            .popover(isPresented: $model.showingOutput, arrowEdge: .bottom) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Follows your Mac’s current output").font(.system(size: 12))
-                    Button("Open Sound Settings…") {
-                        model.showingOutput = false
-                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)
-                    }
-                }.padding(16)
-            }
+            outputSelector
             if let error = model.error {
                 Text(error).font(.system(size: 11)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
             }
             if !model.enabled {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Allow access to app audio to adjust each app. Audio stays on your Mac and is never saved.")
-                        .font(.system(size: 11)).foregroundStyle(MixerTheme.secondary)
-                    Button("Enable app volume control") { model.enable() }
-                        .buttonStyle(.borderedProminent).tint(MixerTheme.accent).foregroundStyle(MixerTheme.master)
-                }
+                Text("App controls are off. Turn them on in settings.")
+                    .font(.system(size: 11)).foregroundStyle(MixerTheme.secondary)
             }
             VStack(spacing: 0) {
                 HStack {
@@ -155,12 +133,40 @@ struct MixerView: View {
         }
         .padding(16).frame(width: 360)
         .foregroundStyle(MixerTheme.text)
-        .background(MixerTheme.background)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.14)))
+        .background {
+            RoundedRectangle(cornerRadius: 24)
+                .fill(.ultraThinMaterial)
+                .overlay(RoundedRectangle(cornerRadius: 24).fill(MixerTheme.background.opacity(0.62)))
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.12)))
+        .shadow(color: .black.opacity(0.25), radius: 24, y: 12)
         .preferredColorScheme(.dark)
     }
     private var separator: some View { Rectangle().fill(.white.opacity(0.05)).frame(height: 1) }
+    private var outputSelector: some View {
+            Button { model.showingOutput.toggle() } label: {
+                HStack(spacing: 9) {
+                    DesignIcon(name: "laptop", size: 17)
+                    Text(model.outputName).font(.system(size: 12)).lineLimit(1)
+                    Spacer(minLength: 0)
+                    DesignIcon(name: "chevron", size: 14)
+                }.padding(.horizontal, 12).frame(height: 40)
+                .background(MixerTheme.output, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.09)))
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+            }.buttonStyle(.plain).focusEffectDisabled()
+            .accessibilityLabel("Output: \(model.outputName)")
+            .popover(isPresented: $model.showingOutput, arrowEdge: .bottom) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Follows your Mac’s current output").font(.system(size: 12))
+                    Button("Open Sound Settings…") {
+                        model.showingOutput = false
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)
+                    }
+                }.padding(16)
+            }
+    }
     private var masterVolume: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
@@ -174,19 +180,28 @@ struct MixerView: View {
             HStack(spacing: 12) {
                 Button { model.toggleMasterMute() } label: {
                     DesignIcon(name: model.masterVolume == 0 ? "muted" : "speaker").frame(width: 30, height: 30)
-                }.buttonStyle(.plain).disabled(!model.masterAvailable)
+                }.buttonStyle(.plain).focusEffectDisabled().disabled(!model.masterAvailable)
                 .accessibilityLabel(model.masterVolume == 0 ? "Unmute master volume" : "Mute master volume")
                 VolumeControl(value: Binding(get: { model.masterVolume }, set: { model.setMaster($0) }), enabled: model.masterAvailable, large: true, label: "Master volume").frame(height: 24)
             }
-        }.padding(16).background(MixerTheme.master, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.07)))
+        }.padding(16)
+        .background(MixerTheme.surface, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.09)))
+        .shadow(color: .black.opacity(0.10), radius: 12, y: 4)
     }
     private func appRow(_ app: AudioApp) -> some View {
         let isMuted = model.muted.contains(app.id)
         return VStack(spacing: 6) {
             HStack(spacing: 10) {
-                if let icon = app.icon { Image(nsImage: icon).resizable().frame(width: 30, height: 30) }
-                else { Image(systemName: "app.fill").font(.system(size: 24)).frame(width: 30, height: 30).foregroundStyle(MixerTheme.secondary) }
+                if let icon = app.icon {
+                    Image(nsImage: icon).resizable().interpolation(.high).frame(width: 30, height: 30)
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                } else {
+                    Image(systemName: "waveform.app").font(.system(size: 15, weight: .medium))
+                        .frame(width: 30, height: 30)
+                        .foregroundStyle(MixerTheme.accent)
+                        .background(MixerTheme.surface, in: RoundedRectangle(cornerRadius: 7))
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(app.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
                     Text(isMuted ? "Muted" : (app.active ? "Playing audio" : "Not playing"))
@@ -198,7 +213,7 @@ struct MixerView: View {
                 Button { model.toggleMute(app) } label: {
                     DesignIcon(name: isMuted ? "muted" : "speaker").frame(width: 24, height: 24)
                         .background(isMuted ? MixerTheme.accent.opacity(0.09) : .clear, in: RoundedRectangle(cornerRadius: 6))
-                }.buttonStyle(.plain).disabled(!model.enabled)
+                }.buttonStyle(.plain).focusEffectDisabled().disabled(!model.enabled)
                 .accessibilityLabel("\(isMuted ? "Unmute" : "Mute") \(app.name)")
                 VolumeControl(value: Binding(get: { model.volume(for: app.id) }, set: {
                     if isMuted { model.muted.remove(app.id) }

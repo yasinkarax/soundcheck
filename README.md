@@ -11,29 +11,28 @@ For example, you can lower your music, keep a video louder, or mute one app whil
 - A Mac running **macOS 14.2 or later**.
 - Speakers or headphones with stereo output. Some audio devices are not supported yet.
 
-Soundcheck is an early version. There is no ready-to-download installer provided in this repository yet. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, follow **Build the app** at the end of this page.
+Soundcheck is an early version. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, [download Soundcheck for macOS](https://github.com/yasinkarax/soundcheck/raw/refs/heads/main/downloads/Soundcheck.zip?download=1) or follow **Build the app** at the end of this page.
 
 ## Using Soundcheck
 
 1. Open **Soundcheck.app**. Look for the **dial icon** in the menu bar at the top of your screen—it does not open a regular app window.
-2. Click that icon, then click **Enable app volume control**.
-3. Play music or a video in another app. It should appear in Soundcheck within a few seconds.
-4. Move the slider next to an app to change its volume. Click its speaker button to mute or unmute it.
-5. If macOS asks for permission to access system audio, allow it so Soundcheck can adjust the sound.
+2. Play music or a video in another app. It should appear in Soundcheck within a few seconds.
+3. Move the slider next to an app to change its volume. Click its speaker button to mute or unmute it.
+4. macOS may show its own system privacy prompt the first time Soundcheck adjusts app audio. This is required by macOS; Soundcheck does not show a separate permission step.
 
 ### What the buttons do
 
 - **Volume slider:** adjusts that app from 0% to 100%. It does not boost audio above its normal volume.
 - **Speaker button:** mutes or unmutes just that app.
 - **Master volume:** changes your output device’s volume. If the device does not support this, it shows “Fixed.”
-- **Settings button** (top right): opens reset, enable/turn-off, and quit actions.
+- **Settings button** (top right): opens reset, turn-off, and quit actions.
 - **Reset app volumes:** clears Soundcheck’s adjustments and unmutes all apps controlled by Soundcheck.
 - **Turn off:** stops controlling audio and restores normal playback.
 - **Quit:** closes Soundcheck and restores normal playback.
 
 Soundcheck uses your Mac’s current speakers or headphones. It does not choose a different output for each app.
 
-## Why does it ask for audio recording permission?
+## macOS audio access
 
 Soundcheck needs access to an app’s sound to change its volume. macOS calls this audio recording access, even though **Soundcheck does not save recordings or upload your audio**. All audio processing happens on your Mac.
 
@@ -47,7 +46,7 @@ Start playing sound in that app and wait a few seconds. Soundcheck shows apps th
 
 **The slider does not change the sound**
 
-Make sure Soundcheck is enabled and has audio access. Check any error message shown in Soundcheck.
+Make sure app controls are turned on from the settings button and macOS has granted audio access. Check any error message shown in Soundcheck.
 
 **My headphones or speakers are not supported**
 
