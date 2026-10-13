@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreAudio
+import AudioToolbox
 
 @available(macOS 14.2, *)
 @MainActor
@@ -10,11 +11,23 @@ final class MixerModel: ObservableObject {
     @Published var outputName = "System output"
     @Published var volumes: [String: Double] = [:]
     @Published var muted: Set<String> = []
+    @Published var showingOutput = false
+    @Published var masterVolume: Double = 1
+    @Published var masterAvailable = false
+    private var volumeBeforeMute: Double = 0.5
     private var sessions: [String: AudioSession] = [:]
     private var timer: Timer?
     private var output: AudioObjectID = 0
 
-    init() {
+    init(preview: Bool = false) {
+        if preview {
+            enabled = true; masterAvailable = true; masterVolume = 0.72
+            outputName = "MacBook Pro speakers"
+            apps = ["Spotify", "Chrome", "Hades II", "Discord"].map { AudioApp(id: $0, name: $0, icon: nil, processes: [], active: true) }
+            volumes = ["Spotify": 0.65, "Chrome": 0.38, "Hades II": 0.82, "Discord": 0.8]
+            muted = ["Discord"]
+            return
+        }
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
@@ -25,6 +38,7 @@ final class MixerModel: ObservableObject {
             let nextOutput = try readValue(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultOutputDevice, initial: AudioObjectID(0))
             if output != nextOutput { sessions.removeAll(); output = nextOutput }
             outputName = (try? readString(output, kAudioObjectPropertyName)) ?? "System output"
+            refreshMaster()
             let discovered = try discoverApps()
             apps = discovered.filter { $0.active || sessions[$0.id] != nil || volumes[$0.id] != nil }
             let existing = Set(discovered.map(\.id))
@@ -36,6 +50,26 @@ final class MixerModel: ObservableObject {
                 for app in apps where volumes[app.id] != nil || muted.contains(app.id) { try apply(app) }
             }
         } catch { fail(error) }
+    }
+    private func refreshMaster() {
+        var key = address(kAudioHardwareServiceDeviceProperty_VirtualMainVolume, kAudioDevicePropertyScopeOutput)
+        var settable: DarwinBoolean = false
+        var volume: Float32 = 1
+        var size = UInt32(MemoryLayout<Float32>.size)
+        masterAvailable = AudioObjectIsPropertySettable(output, &key, &settable) == noErr && settable.boolValue && AudioObjectGetPropertyData(output, &key, 0, nil, &size, &volume) == noErr
+        if masterAvailable { masterVolume = Double(volume) }
+    }
+    func setMaster(_ value: Double) {
+        guard masterAvailable else { return }
+        var key = address(kAudioHardwareServiceDeviceProperty_VirtualMainVolume, kAudioDevicePropertyScopeOutput)
+        var volume = Float32(min(1, max(0, value)))
+        let status = AudioObjectSetPropertyData(output, &key, 0, nil, UInt32(MemoryLayout<Float32>.size), &volume)
+        if status == noErr { masterVolume = Double(volume) }
+        else { error = "This output device could not change its volume. Use your Mac’s sound controls."; refreshMaster() }
+    }
+    func toggleMasterMute() {
+        if masterVolume > 0 { volumeBeforeMute = masterVolume; setMaster(0) }
+        else { setMaster(volumeBeforeMute) }
     }
     func enable() { enabled = true; error = nil; refresh() }
     func disable() { sessions.removeAll(); enabled = false }
@@ -62,102 +96,33 @@ final class MixerModel: ObservableObject {
     }
 }
 
-@available(macOS 14.2, *)
-struct MixerView: View {
-    @ObservedObject var model: MixerModel
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(spacing: 12) {
-                Image(systemName: "slider.vertical.3").font(.title).foregroundStyle(.mint)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Soundcheck").font(.title2.bold())
-                    Text("A little balance for your Mac.").font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Circle().fill(model.enabled ? Color.mint : Color.secondary).frame(width: 7, height: 7)
-                Text(model.enabled ? "On" : "Off").font(.caption).foregroundStyle(.secondary)
-            }
-            HStack {
-                Image(systemName: "speaker.wave.2")
-                Text(model.outputName).lineLimit(1)
-                Spacer()
-                Text("CURRENT OUTPUT").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
-            }
-            .font(.callout).padding(12).background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
-
-            if let error = model.error {
-                Label(error, systemImage: "exclamationmark.triangle")
-                    .font(.caption).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
-            }
-            if !model.enabled {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Your apps. Your volume.").font(.headline)
-                    Text("Control each app separately. macOS may ask for system audio recording access when you first adjust a slider. Audio stays on your Mac and is never saved.")
-                        .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    Button("Enable app volume control") { model.enable() }
-                        .buttonStyle(.borderedProminent).tint(.mint).controlSize(.large)
-                }
-            }
-            HStack {
-                Text("APPLICATIONS").font(.system(size: 10, weight: .semibold)).tracking(1.5).foregroundStyle(.secondary)
-                Spacer()
-                Text("\(model.apps.count)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-            }
-            if model.apps.isEmpty {
-                VStack(spacing: 10) {
-                    Image(systemName: "waveform").font(.system(size: 32)).foregroundStyle(.secondary)
-                    Text("Waiting for a little sound").font(.headline)
-                    Text("Play music or a video to see its app here.").font(.caption).foregroundStyle(.secondary)
-                }.frame(maxWidth: .infinity).padding(.vertical, 26)
-            } else {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(model.apps) { app in
-                            appRow(app)
-                        }
-                    }
-                }.frame(maxHeight: 360)
-            }
-            Divider()
-            HStack {
-                Button("Reset volumes") { model.reset() }.buttonStyle(.plain).foregroundStyle(.secondary)
-                Spacer()
-                if model.enabled {
-                    Button("Turn off") { model.disable() }.buttonStyle(.plain).foregroundStyle(.secondary)
-                }
-                Button("Quit") { model.disable(); NSApplication.shared.terminate(nil) }.buttonStyle(.plain).foregroundStyle(.secondary)
-            }.font(.caption)
-        }
-        .padding(24).frame(width: 400).tint(.mint)
-    }
-    private func appRow(_ app: AudioApp) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                if let icon = app.icon { Image(nsImage: icon).resizable().frame(width: 28, height: 28) }
-                else { Image(systemName: "app.fill").font(.title2).frame(width: 28) }
-                Text(app.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
-                Spacer()
-                Text(model.muted.contains(app.id) ? "Muted" : "\(Int(model.volume(for: app.id) * 100))%")
-                    .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-            }
-            HStack(spacing: 12) {
-                Button { model.toggleMute(app) } label: {
-                    Image(systemName: model.muted.contains(app.id) ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                        .frame(width: 22)
-                }.buttonStyle(.plain).accessibilityLabel("\(model.muted.contains(app.id) ? "Unmute" : "Mute") \(app.name)")
-                Slider(value: Binding(get: { model.volume(for: app.id) }, set: { model.setVolume(app, $0) }), in: 0...1)
-                    .accessibilityLabel("\(app.name) volume")
-            }.disabled(!model.enabled)
-        }.padding(13).background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
-    }
-}
 
 @main
 struct SoundcheckApp: App {
     @StateObject private var model = MixerModel()
+    init() {
+        if let flag = CommandLine.arguments.firstIndex(of: "--render-preview"), CommandLine.arguments.count > flag + 1 {
+            let preview = MixerModel(preview: true)
+            let view = NSHostingView(rootView: MixerView(model: preview))
+            let size = view.fittingSize
+            view.frame = NSRect(origin: .zero, size: size)
+            let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+            window.contentView = view
+            view.layoutSubtreeIfNeeded()
+            guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
+            view.cacheDisplay(in: view.bounds, to: bitmap)
+            guard let png = bitmap.representation(using: .png, properties: [:]) else { exit(1) }
+            do { try png.write(to: URL(fileURLWithPath: CommandLine.arguments[flag + 1])); exit(0) }
+            catch { fputs("Preview export failed: \(error)\n", stderr); exit(1) }
+        }
+    }
     var body: some Scene {
-        MenuBarExtra("Soundcheck", systemImage: "slider.vertical.3") {
+        MenuBarExtra {
             MixerView(model: model)
+        } label: {
+            let image = DesignIcon.image("menu-dial")
+            let _ = { image.size = NSSize(width: 18, height: 18); image.isTemplate = true }()
+            Image(nsImage: image).accessibilityLabel("Soundcheck")
         }.menuBarExtraStyle(.window)
     }
 }

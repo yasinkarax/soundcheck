@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="15" height="14.75" viewBox="0 0 15 14.75" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Soundcheck &#226;&#128;&#148; dial logo">
+<path id="Audio dial &#226;&#128;&#148; open ring" d="M12.0225 2.72657C10.9181 1.62242 9.46508 0.935353 7.91092 0.782445C6.35676 0.629537 4.79767 1.02025 3.49929 1.888C2.20091 2.75575 1.24359 4.04686 0.790431 5.54133C0.337276 7.03579 0.416329 8.64115 1.01412 10.0839C1.61192 11.5266 2.69146 12.7174 4.06881 13.4534C5.44617 14.1894 7.0361 14.425 8.56772 14.1201C10.0993 13.8153 11.4779 12.9888 12.4684 11.7815C13.4589 10.5742 14.0002 9.06073 14 7.49907" stroke="#A6C4FF" stroke-linecap="round"/>
+<path id="Equalizer" d="M4.75 6.5V9M7.25 4.5V11M9.75 6.5V9" stroke="#F1F2F4" stroke-linecap="round"/>
+<path id="Dial indicator" d="M12.25 2.75L14.5 0.5" stroke="#A6C4FF" stroke-linecap="round"/>
+</g>
+</svg>

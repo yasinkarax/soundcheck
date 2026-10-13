@@ -2,7 +2,7 @@
 
 **Turn down one app without turning down your whole Mac.**
 
-Soundcheck is a small app that lives in your Mac’s menu bar. It gives each app its own volume slider and mute button—similar to the Windows volume mixer.
+Soundcheck is a small app that lives in your Mac’s menu bar. It gives each app its own volume slider and mute button—similar to the Windows volume mixer. The compact dark interface also includes a master-volume slider for your current output.
 
 For example, you can lower your music, keep a video louder, or mute one app while the others keep playing.
 
@@ -15,7 +15,7 @@ Soundcheck is an early version. There is no ready-to-download installer provided
 
 ## Using Soundcheck
 
-1. Open **Soundcheck.app**. Look for the **sliders icon** in the menu bar at the top of your screen—it does not open a regular app window.
+1. Open **Soundcheck.app**. Look for the **dial icon** in the menu bar at the top of your screen—it does not open a regular app window.
 2. Click that icon, then click **Enable app volume control**.
 3. Play music or a video in another app. It should appear in Soundcheck within a few seconds.
 4. Move the slider next to an app to change its volume. Click its speaker button to mute or unmute it.
@@ -25,7 +25,9 @@ Soundcheck is an early version. There is no ready-to-download installer provided
 
 - **Volume slider:** adjusts that app from 0% to 100%. It does not boost audio above its normal volume.
 - **Speaker button:** mutes or unmutes just that app.
-- **Reset volumes:** clears Soundcheck’s adjustments and unmutes all apps controlled by Soundcheck.
+- **Master volume:** changes your output device’s volume. If the device does not support this, it shows “Fixed.”
+- **Settings button** (top right): opens reset, enable/turn-off, and quit actions.
+- **Reset app volumes:** clears Soundcheck’s adjustments and unmutes all apps controlled by Soundcheck.
 - **Turn off:** stops controlling audio and restores normal playback.
 - **Quit:** closes Soundcheck and restores normal playback.
 
@@ -102,6 +104,8 @@ The build is intended for local use. A signed, notarized installer for wider dis
 ## For developers
 
 Soundcheck uses SwiftUI for the menu bar interface and Core Audio process taps for per-app audio control. A C audio callback applies volume changes without allocating memory or taking locks on the audio thread.
+
+The build also creates **dist/Soundcheck.zip**, containing the app and its bundled design assets. Unzip it and open **Soundcheck.app**. This local build is not notarized.
 
 Run the audio-processing checks from the project folder:
 

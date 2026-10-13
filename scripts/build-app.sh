@@ -8,8 +8,15 @@ if [[ $# -eq 0 ]]; then
 else
   BINARY="$1"
 fi
-APP="dist/Soundcheck.app"
-mkdir -p "$APP/Contents/MacOS"
+STAGING="$(mktemp -d /tmp/soundcheck-package.XXXXXX)"
+APP="$STAGING/Soundcheck.app"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+RESOURCE_BUNDLE="$(dirname "$BINARY")/Soundcheck_Mixer.bundle"
+if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
+  echo "Missing app resources: $RESOURCE_BUNDLE" >&2
+  exit 1
+fi
+ditto --norsrc "$RESOURCE_BUNDLE" "$APP/Contents/Resources/Soundcheck_Mixer.bundle"
 cp "$BINARY" "$APP/Contents/MacOS/Soundcheck"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -19,8 +26,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>local.sounddesk.mixer</string>
 <key>CFBundleName</key><string>Soundcheck</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleShortVersionString</key><string>0.2.0</string>
+<key>CFBundleVersion</key><string>2</string>
 <key>LSMinimumSystemVersion</key><string>14.2</string>
 <key>LSUIElement</key><true/>
 <key>NSAudioCaptureUsageDescription</key><string>Soundcheck processes app audio locally so you can change each app’s volume. Audio is never recorded or uploaded.</string>
@@ -29,5 +36,11 @@ PLIST
 # Synced folders may attach Finder metadata, which invalidates code signing.
 xattr -dr com.apple.FinderInfo "$APP" 2>/dev/null || true
 xattr -dr com.apple.ResourceFork "$APP" 2>/dev/null || true
+codesign --force --sign - "$APP/Contents/Resources/Soundcheck_Mixer.bundle"
 codesign --force --sign - "$APP"
-echo "Built $APP"
+codesign --verify --deep --strict "$APP"
+mkdir -p dist
+ditto --norsrc "$APP" dist/Soundcheck.app
+xattr -dr com.apple.FinderInfo dist/Soundcheck.app 2>/dev/null || true
+ditto -c -k --norsrc --keepParent "$APP" dist/Soundcheck.zip
+echo "Built dist/Soundcheck.app and dist/Soundcheck.zip"

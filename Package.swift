@@ -7,6 +7,6 @@ let package = Package(
     products: [.executable(name: "Soundcheck", targets: ["Mixer"])],
     targets: [
         .target(name: "AudioRender", publicHeadersPath: "include"),
-        .executableTarget(name: "Mixer", dependencies: ["AudioRender"])
+        .executableTarget(name: "Mixer", dependencies: ["AudioRender"], resources: [.copy("Resources")])
     ]
 )
