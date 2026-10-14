@@ -204,7 +204,7 @@ struct MixerView: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(app.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
-                    Text(isMuted ? "Muted" : (app.active ? "Playing audio" : "Not playing"))
+                    Text(isMuted ? "Muted" : (app.subtitle ?? (app.active ? "Playing audio" : "Not playing")))
                         .font(.system(size: 10)).foregroundStyle(isMuted ? MixerTheme.accent : MixerTheme.muted)
                 }
                 Spacer()

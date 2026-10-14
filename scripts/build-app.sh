@@ -26,8 +26,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>local.sounddesk.mixer</string>
 <key>CFBundleName</key><string>Soundcheck</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.2.1</string>
-<key>CFBundleVersion</key><string>3</string>
+<key>CFBundleShortVersionString</key><string>0.2.2</string>
+<key>CFBundleVersion</key><string>4</string>
 <key>LSMinimumSystemVersion</key><string>14.2</string>
 <key>LSUIElement</key><true/>
 <key>NSAudioCaptureUsageDescription</key><string>Soundcheck processes app audio locally so you can change each app’s volume. Audio is never recorded or uploaded.</string>

@@ -23,7 +23,16 @@ final class MixerModel: ObservableObject {
         if preview {
             enabled = true; masterAvailable = true; masterVolume = 0.72
             outputName = "MacBook Pro speakers"
-            apps = ["Spotify", "Chrome", "Hades II", "Discord"].map { AudioApp(id: $0, name: $0, icon: nil, processes: [], active: true) }
+            let samples: [(name: String, icon: String, subtitle: String)] = [
+                ("Spotify", "preview-spotify", "Nights · Frank Ocean"),
+                ("Chrome", "preview-chrome", "YouTube · Design in motion"),
+                ("Hades II", "preview-hades", "Game audio"),
+                ("Discord", "preview-discord", "Muted")
+            ]
+            apps = samples.map { sample in
+                let iconURL = Bundle.module.url(forResource: sample.icon, withExtension: "png", subdirectory: "Resources")
+                return AudioApp(id: sample.name, name: sample.name, icon: iconURL.flatMap(NSImage.init(contentsOf:)), processes: [], active: true, subtitle: sample.subtitle)
+            }
             volumes = ["Spotify": 0.65, "Chrome": 0.38, "Hades II": 0.82, "Discord": 0.8]
             muted = ["Discord"]
             return

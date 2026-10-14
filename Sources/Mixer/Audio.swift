@@ -47,6 +47,7 @@ struct AudioApp: Identifiable {
     let icon: NSImage?
     var processes: [AudioObjectID]
     var active: Bool
+    var subtitle: String? = nil
 }
 
 @available(macOS 14.2, *)
