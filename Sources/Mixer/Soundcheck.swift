@@ -18,8 +18,10 @@ final class MixerModel: ObservableObject {
     private var sessions: [String: AudioSession] = [:]
     private var timer: Timer?
     private var output: AudioObjectID = 0
+    private let isPreview: Bool
 
     init(preview: Bool = false) {
+        isPreview = preview
         if preview {
             enabled = true; masterAvailable = true; masterVolume = 0.72
             outputName = "MacBook Pro speakers"
@@ -30,8 +32,7 @@ final class MixerModel: ObservableObject {
                 ("Discord", "preview-discord", "Muted")
             ]
             apps = samples.map { sample in
-                let iconURL = Bundle.module.url(forResource: sample.icon, withExtension: "png", subdirectory: "Resources")
-                return AudioApp(id: sample.name, name: sample.name, icon: iconURL.flatMap(NSImage.init(contentsOf:)), processes: [], active: true, subtitle: sample.subtitle)
+                AudioApp(id: sample.name, name: sample.name, icon: Self.previewIcon(sample.icon), processes: [], active: true, subtitle: sample.subtitle)
             }
             volumes = ["Spotify": 0.65, "Chrome": 0.38, "Hades II": 0.82, "Discord": 0.8]
             muted = ["Discord"]
@@ -43,6 +44,7 @@ final class MixerModel: ObservableObject {
         }
     }
     func refresh() {
+        guard !isPreview else { return }
         do {
             let nextOutput = try readValue(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultOutputDevice, initial: AudioObjectID(0))
             if output != nextOutput { sessions.removeAll(); output = nextOutput }
@@ -70,6 +72,7 @@ final class MixerModel: ObservableObject {
     }
     func setMaster(_ value: Double) {
         guard masterAvailable else { return }
+        if isPreview { masterVolume = min(1, max(0, value)); return }
         var key = address(kAudioHardwareServiceDeviceProperty_VirtualMainVolume, kAudioDevicePropertyScopeOutput)
         var volume = Float32(min(1, max(0, value)))
         let status = AudioObjectSetPropertyData(output, &key, 0, nil, UInt32(MemoryLayout<Float32>.size), &volume)
@@ -93,7 +96,7 @@ final class MixerModel: ObservableObject {
     }
     func reset() { sessions.removeAll(); volumes = [:]; muted = []; error = nil }
     private func apply(_ app: AudioApp) throws {
-        guard enabled else { return }
+        guard enabled, !isPreview else { return }
         let value = muted.contains(app.id) ? 0 : Float(volume(for: app.id))
         if value == 1 { sessions.removeValue(forKey: app.id); return }
         if let session = sessions[app.id] { session.setVolume(value) }
@@ -103,19 +106,49 @@ final class MixerModel: ObservableObject {
         disable()
         error = issue.localizedDescription
     }
+
+    private static func previewIcon(_ name: String) -> NSImage {
+        let artwork = DesignIcon.image(name)
+        return NSImage(size: NSSize(width: 30, height: 30), flipped: false) { bounds in
+            var artworkBounds = bounds
+            let background: NSColor?
+            switch name {
+            case "preview-chrome":
+                background = NSColor(srgbRed: 245 / 255, green: 245 / 255, blue: 247 / 255, alpha: 1)
+                artworkBounds = bounds.insetBy(dx: 1, dy: 1)
+            case "preview-hades":
+                background = NSColor(srgbRed: 96 / 255, green: 70 / 255, blue: 52 / 255, alpha: 1)
+                artworkBounds = bounds.insetBy(dx: 6.75, dy: 6.75)
+            case "preview-discord":
+                background = NSColor(srgbRed: 88 / 255, green: 101 / 255, blue: 242 / 255, alpha: 1)
+                artworkBounds = bounds.insetBy(dx: 6.75, dy: 6.75)
+            default: background = nil
+            }
+            if let background {
+                background.setFill()
+                NSBezierPath(roundedRect: bounds, xRadius: 10, yRadius: 10).fill()
+            }
+            artwork.draw(in: artworkBounds)
+            return true
+        }
+    }
 }
 
 
 @main
-struct SoundcheckApp: App {
-    @StateObject private var model = MixerModel()
-    init() {
+struct SoundcheckApp {
+    @MainActor static func main() {
+        let application = NSApplication.shared
+        application.setActivationPolicy(.accessory)
         if let flag = CommandLine.arguments.firstIndex(of: "--render-preview"), CommandLine.arguments.count > flag + 1 {
             let preview = MixerModel(preview: true)
-            let view = NSHostingView(rootView: MixerView(model: preview))
+            let view = TransparentMixerHostingView(rootView: MixerView(model: preview))
             let size = view.fittingSize
             view.frame = NSRect(origin: .zero, size: size)
-            let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+            let window = MixerPanel(contentRect: view.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.hasShadow = true
             window.contentView = view
             view.layoutSubtreeIfNeeded()
             guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
@@ -124,12 +157,8 @@ struct SoundcheckApp: App {
             do { try png.write(to: URL(fileURLWithPath: CommandLine.arguments[flag + 1])); exit(0) }
             catch { fputs("Preview export failed: \(error)\n", stderr); exit(1) }
         }
-    }
-    var body: some Scene {
-        MenuBarExtra {
-            MixerView(model: model)
-        } label: {
-            BrandLogoMark(width: 18).accessibilityLabel("Soundcheck")
-        }.menuBarExtraStyle(.window)
+        let delegate = SoundcheckAppDelegate()
+        application.delegate = delegate
+        withExtendedLifetime(delegate) { application.run() }
     }
 }

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+APP_VERSION="0.3.0"
+APP_BUILD="7"
 if [[ $# -eq 0 ]]; then
   swift build -c release --scratch-path .build
   BIN_DIR="$(swift build -c release --scratch-path .build --show-bin-path)"
@@ -18,7 +20,7 @@ if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
 fi
 ditto --norsrc "$RESOURCE_BUNDLE" "$APP/Contents/Resources/Soundcheck_Mixer.bundle"
 cp "$BINARY" "$APP/Contents/MacOS/Soundcheck"
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -26,8 +28,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>local.sounddesk.mixer</string>
 <key>CFBundleName</key><string>Soundcheck</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.2.4</string>
-<key>CFBundleVersion</key><string>6</string>
+<key>CFBundleShortVersionString</key><string>$APP_VERSION</string>
+<key>CFBundleVersion</key><string>$APP_BUILD</string>
 <key>LSMinimumSystemVersion</key><string>14.2</string>
 <key>LSUIElement</key><true/>
 <key>NSAudioCaptureUsageDescription</key><string>Soundcheck processes app audio locally so you can change each app’s volume. Audio is never recorded or uploaded.</string>
@@ -43,4 +45,5 @@ mkdir -p dist
 ditto --norsrc "$APP" dist/Soundcheck.app
 xattr -dr com.apple.FinderInfo dist/Soundcheck.app 2>/dev/null || true
 ditto -c -k --norsrc --keepParent "$APP" dist/Soundcheck.zip
+cp dist/Soundcheck.zip "dist/Soundcheck-$APP_VERSION.zip"
 echo "Built dist/Soundcheck.app and dist/Soundcheck.zip"

@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Chrome mark" clip-path="url(#clip0_0_31)">
+<circle id="Browser disk" cx="14" cy="14" r="14" fill="#E8BD4D"/>
+<path id="Browser segment" d="M15.6659 27.7964L4 8.08307C6.28458 4.14174 9.21576 1.4479 12.4152 0.349234C15.6147 -0.749436 18.9356 -0.202506 21.9493 1.91943C24.9631 4.04137 27.5313 7.64092 29.3225 12.2535C31.1137 16.8661 32.0457 22.28 31.9983 27.7964H15.6659Z" fill="#DB625A"/>
+<path id="Browser segment_2" d="M27.7964 15.6659V31.9983C22.28 32.0457 16.8661 31.1137 12.2535 29.3225C7.64092 27.5313 4.04137 24.9631 1.91943 21.9493C-0.202506 18.9356 -0.749436 15.6147 0.349234 12.4152C1.4479 9.21576 4.14174 6.28458 8.08307 4L27.7964 15.6659Z" fill="#65A776"/>
+<circle id="Browser center" cx="14" cy="14" r="6" fill="#68A6E8" stroke="#F5F5F7" stroke-width="2"/>
+</g>
+<defs>
+<clipPath id="clip0_0_31">
+<rect width="28" height="28" fill="white"/>
+</clipPath>
+</defs>
+</svg>

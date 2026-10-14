@@ -11,9 +11,11 @@ For example, you can lower your music, keep a video louder, or mute one app whil
 - A Mac running **macOS 14.2 or later**.
 - Speakers or headphones with stereo output. Some audio devices are not supported yet.
 
-Soundcheck is an early version. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, [download Soundcheck for macOS](https://github.com/yasinkarax/soundcheck/raw/refs/heads/main/downloads/Soundcheck.zip?download=1) or follow **Build the app** at the end of this page.
+Soundcheck is an early version. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, [download Soundcheck 0.3.0 for macOS](https://github.com/yasinkarax/soundcheck/raw/refs/heads/main/downloads/Soundcheck-0.3.0.zip?download=1) or follow **Build the app** at the end of this page.
 
 ## Using Soundcheck
+
+If you are replacing an older build, quit Soundcheck first, then open the newly downloaded app. You can check its version from the settings button → **About Soundcheck**.
 
 1. Open **Soundcheck.app**. Look for the **dial icon** in the menu bar at the top of your screen—it does not open a regular app window.
 2. Play music or a video in another app. It should appear in Soundcheck within a few seconds.

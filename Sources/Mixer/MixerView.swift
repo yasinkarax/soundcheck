@@ -3,6 +3,7 @@ import SwiftUI
 // Raw colors from Figma node 2:3587. The requested design is dark-only.
 enum MixerTheme {
     static let background = Color(red: 0.043, green: 0.059, blue: 0.078)
+    static let panel = Color(red: 0.11956, green: 0.13428, blue: 0.15176)
     static let surface = Color.white.opacity(0.06)
     static let output = Color.white.opacity(0.05)
     static let text = Color(red: 0.945, green: 0.949, blue: 0.957)
@@ -16,7 +17,8 @@ struct DesignIcon: View {
     let name: String
     var size: CGFloat = 16
     static func image(_ name: String) -> NSImage {
-        let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Resources")!
+        let url = Bundle.module.url(forResource: name, withExtension: "svg", subdirectory: "Resources")
+            ?? Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Resources")!
         return NSImage(contentsOf: url)!
     }
     var body: some View {
@@ -27,25 +29,25 @@ struct DesignIcon: View {
 struct BrandLogoMark: View {
     var width: CGFloat = 16
 
-    private let logoWidth: CGFloat = 67.5
-    private let logoHeight: CGFloat = 53.5
+    private let logoWidth: CGFloat = 69.25
+    private let logoHeight: CGFloat = 56.25
 
     var body: some View {
         GeometryReader { geometry in
             let scale = geometry.size.width / logoWidth
             ZStack(alignment: .topLeading) {
                 layer("logo-vinyl", width: 53.5, height: 53.5, scale: scale)
-                    .position(x: 25 * scale, y: 29.5 * scale)
+                    .position(x: 26.75 * scale, y: 29.5 * scale)
                 layer("logo-groove", width: 34, height: 34, scale: scale)
-                    .position(x: 25 * scale, y: 29.5 * scale)
+                    .position(x: 26.75 * scale, y: 29.5 * scale)
                 layer("logo-spindle", width: 6, height: 6, scale: scale)
-                    .position(x: 25 * scale, y: 29.5 * scale)
+                    .position(x: 26.75 * scale, y: 29.5 * scale)
                 layer("logo-tonearm", width: 20.5, height: 44.5, scale: scale)
-                    .position(x: 55.5 * scale, y: 24 * scale)
+                    .position(x: 57.25 * scale, y: 24 * scale)
                 layer("logo-stylus", width: 11, height: 11, scale: scale)
-                    .position(x: 47.5 * scale, y: 44 * scale)
+                    .position(x: 49.25 * scale, y: 44 * scale)
                 layer("logo-pivot", width: 7, height: 7, scale: scale)
-                    .position(x: 64 * scale, y: 3.5 * scale)
+                    .position(x: 65.75 * scale, y: 3.5 * scale)
             }
         }
         .frame(width: width, height: width * logoHeight / logoWidth)
@@ -66,20 +68,32 @@ final class MixerSliderCell: NSSliderCell {
     var isMuted = false
     override var knobThickness: CGFloat { controlSize == .regular ? 16 : 12 }
     override func drawBar(inside rect: NSRect, flipped: Bool) {
-        let bar = NSRect(x: rect.minX, y: rect.midY - 2, width: rect.width, height: 4)
+        let bounds = controlView?.bounds ?? rect
+        let thickness: CGFloat = controlSize == .regular ? 6 : 4
+        let bar = NSRect(x: rect.minX, y: bounds.midY - thickness / 2, width: rect.width, height: thickness)
         NSColor(MixerTheme.track).setFill()
-        NSBezierPath(roundedRect: bar, xRadius: 2, yRadius: 2).fill()
+        NSBezierPath(roundedRect: bar, xRadius: thickness / 2, yRadius: thickness / 2).fill()
         let fraction = CGFloat((doubleValue - minValue) / max(0.001, maxValue - minValue))
         if !isMuted && isEnabled {
             NSColor(MixerTheme.accent).setFill()
-            NSBezierPath(roundedRect: NSRect(x: bar.minX, y: bar.minY, width: bar.width * fraction, height: 4), xRadius: 2, yRadius: 2).fill()
+            NSBezierPath(roundedRect: NSRect(x: bar.minX, y: bar.minY, width: bar.width * fraction, height: thickness), xRadius: thickness / 2, yRadius: thickness / 2).fill()
         }
     }
     override func drawKnob(_ rect: NSRect) {
         let diameter = knobThickness
-        let knob = NSRect(x: rect.midX - diameter / 2, y: rect.midY - diameter / 2, width: diameter, height: diameter)
+        let centerY = controlView?.bounds.midY ?? rect.midY
+        let knob = NSRect(x: rect.midX - diameter / 2, y: centerY - diameter / 2, width: diameter, height: diameter)
+        NSGraphicsContext.saveGraphicsState()
+        if controlSize == .regular {
+            let shadow = NSShadow()
+            shadow.shadowColor = NSColor.black.withAlphaComponent(0.2)
+            shadow.shadowBlurRadius = 3
+            shadow.shadowOffset = NSSize(width: 0, height: -1)
+            shadow.set()
+        }
         (isMuted || !isEnabled ? NSColor(MixerTheme.secondary) : NSColor(MixerTheme.text)).setFill()
         NSBezierPath(ovalIn: knob).fill()
+        NSGraphicsContext.restoreGraphicsState()
     }
 }
 struct VolumeControl: NSViewRepresentable {
@@ -93,6 +107,7 @@ struct VolumeControl: NSViewRepresentable {
         let slider = NSSlider()
         slider.cell = MixerSliderCell()
         slider.minValue = 0; slider.maxValue = 1; slider.isContinuous = true
+        slider.focusRingType = .none
         slider.target = context.coordinator; slider.action = #selector(Coordinator.changed(_:))
         return slider
     }
@@ -127,6 +142,7 @@ struct MixerView: View {
                         if model.enabled { model.disable() } else { model.enable() }
                     }
                     Divider()
+                    Button("About Soundcheck…") { NSApplication.shared.orderFrontStandardAboutPanel(nil) }
                     Button("Quit Soundcheck") { model.disable(); NSApplication.shared.terminate(nil) }
                 } label: { DesignIcon(name: "settings").frame(width: 24, height: 24) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
@@ -148,7 +164,7 @@ struct MixerView: View {
                     Spacer()
                     Text("\(model.apps.filter { $0.active && !model.muted.contains($0.id) }.count) playing")
                         .foregroundStyle(MixerTheme.secondary)
-                }.font(.system(size: 10)).padding(.top, 2).padding(.bottom, 4)
+                }.font(.system(size: 10)).frame(height: 14).padding(.top, 2).padding(.bottom, 4)
                 if model.apps.isEmpty {
                     VStack(spacing: 8) {
                         Image(systemName: "waveform").font(.title2)
@@ -162,24 +178,21 @@ struct MixerView: View {
                                 if app.id != model.apps.last?.id { separator }
                             }
                         }
-                    }.frame(height: min(CGFloat(model.apps.count) * 88, 352))
+                    }
+                    .scrollIndicators(.hidden)
+                    .frame(height: min(CGFloat(model.apps.count * 87 + max(model.apps.count - 1, 0)), 351))
                 }
             }
             separator
         }
         .padding(16).frame(width: 360)
         .foregroundStyle(MixerTheme.text)
-        .background {
-            RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial)
-                .overlay(RoundedRectangle(cornerRadius: 24).fill(MixerTheme.background.opacity(0.62)))
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .overlay(RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.12)))
-        .shadow(color: .black.opacity(0.25), radius: 24, y: 12)
+        .background(MixerTheme.panel)
+        .clipShape(RoundedRectangle(cornerRadius: 28))
+        .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(0.12)))
         .preferredColorScheme(.dark)
     }
-    private var separator: some View { Rectangle().fill(.white.opacity(0.05)).frame(height: 1) }
+    private var separator: some View { Rectangle().fill(.white.opacity(0.07)).frame(height: 1) }
     private var outputSelector: some View {
             Button { model.showingOutput.toggle() } label: {
                 HStack(spacing: 9) {
@@ -212,7 +225,7 @@ struct MixerView: View {
                 if model.masterAvailable {
                     (Text("\(Int(model.masterVolume * 100))").font(.system(size: 20, weight: .medium)) + Text("%").font(.system(size: 12)).foregroundColor(MixerTheme.secondary)).monospacedDigit()
                 } else { Text("Fixed").font(.system(size: 12)).foregroundStyle(MixerTheme.secondary) }
-            }
+            }.frame(height: 24)
             HStack(spacing: 12) {
                 Button { model.toggleMasterMute() } label: {
                     DesignIcon(name: model.masterVolume == 0 ? "muted" : "speaker").frame(width: 30, height: 30)
@@ -230,8 +243,7 @@ struct MixerView: View {
         return VStack(spacing: 6) {
             HStack(spacing: 10) {
                 if let icon = app.icon {
-                    Image(nsImage: icon).resizable().interpolation(.high).frame(width: 30, height: 30)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                    Image(nsImage: icon).resizable().interpolation(.high).scaledToFit().frame(width: 30, height: 30)
                 } else {
                     Image(systemName: "waveform.app").font(.system(size: 15, weight: .medium))
                         .frame(width: 30, height: 30)
@@ -240,8 +252,10 @@ struct MixerView: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(app.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                        .frame(height: 17, alignment: .leading)
                     Text(isMuted ? "Muted" : (app.subtitle ?? (app.active ? "Playing audio" : "Not playing")))
                         .font(.system(size: 10)).foregroundStyle(isMuted ? MixerTheme.accent : MixerTheme.muted)
+                        .lineLimit(1).frame(height: 14, alignment: .leading)
                 }
                 Spacer()
             }
@@ -254,11 +268,11 @@ struct MixerView: View {
                 VolumeControl(value: Binding(get: { model.volume(for: app.id) }, set: {
                     if isMuted { model.muted.remove(app.id) }
                     model.setVolume(app, $0)
-                }), muted: isMuted, enabled: model.enabled, label: "\(app.name) volume").frame(height: 24)
+                }), muted: isMuted, enabled: model.enabled, label: "\(app.name) volume").frame(width: 232, height: 24)
                 Text("\(isMuted ? 0 : Int(model.volume(for: app.id) * 100))%")
                     .font(.system(size: 11)).monospacedDigit().foregroundStyle(isMuted ? MixerTheme.muted : MixerTheme.secondary)
                     .frame(width: 34, alignment: .trailing)
-            }
+            }.frame(maxWidth: .infinity, alignment: .leading)
         }.padding(.vertical, 12)
     }
 }
