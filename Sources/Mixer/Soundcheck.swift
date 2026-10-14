@@ -129,9 +129,7 @@ struct SoundcheckApp: App {
         MenuBarExtra {
             MixerView(model: model)
         } label: {
-            let image = DesignIcon.image("turntable-mark")
-            let _ = { image.isTemplate = false }()
-            Image(nsImage: image).resizable().scaledToFit().frame(width: 18, height: 18).accessibilityLabel("Soundcheck")
+            BrandLogoMark(width: 18).accessibilityLabel("Soundcheck")
         }.menuBarExtraStyle(.window)
     }
 }

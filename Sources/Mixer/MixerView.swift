@@ -24,6 +24,42 @@ struct DesignIcon: View {
     }
 }
 
+struct BrandLogoMark: View {
+    var width: CGFloat = 16
+
+    private let logoWidth: CGFloat = 67.5
+    private let logoHeight: CGFloat = 53.5
+
+    var body: some View {
+        GeometryReader { geometry in
+            let scale = geometry.size.width / logoWidth
+            ZStack(alignment: .topLeading) {
+                layer("logo-vinyl", width: 53.5, height: 53.5, scale: scale)
+                    .position(x: 25 * scale, y: 29.5 * scale)
+                layer("logo-groove", width: 34, height: 34, scale: scale)
+                    .position(x: 25 * scale, y: 29.5 * scale)
+                layer("logo-spindle", width: 6, height: 6, scale: scale)
+                    .position(x: 25 * scale, y: 29.5 * scale)
+                layer("logo-tonearm", width: 20.5, height: 44.5, scale: scale)
+                    .position(x: 55.5 * scale, y: 24 * scale)
+                layer("logo-stylus", width: 11, height: 11, scale: scale)
+                    .position(x: 47.5 * scale, y: 44 * scale)
+                layer("logo-pivot", width: 7, height: 7, scale: scale)
+                    .position(x: 64 * scale, y: 3.5 * scale)
+            }
+        }
+        .frame(width: width, height: width * logoHeight / logoWidth)
+        .accessibilityHidden(true)
+    }
+
+    private func layer(_ name: String, width: CGFloat, height: CGFloat, scale: CGFloat) -> some View {
+        Image(nsImage: DesignIcon.image(name))
+            .resizable()
+            .interpolation(.high)
+            .frame(width: width * scale, height: height * scale)
+    }
+}
+
 // NSSlider supplies native mouse, keyboard, and accessibility behavior; the cell
 // draws the slimmer track and circular thumb from the Figma design.
 final class MixerSliderCell: NSSliderCell {
@@ -82,7 +118,7 @@ struct MixerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 7) {
-                DesignIcon(name: "turntable-mark", size: 13).frame(width: 16, height: 16)
+                BrandLogoMark(width: 16)
                 Text("Soundcheck").font(.system(size: 14, weight: .semibold))
                 Spacer()
                 Menu {
