@@ -129,9 +129,9 @@ struct SoundcheckApp: App {
         MenuBarExtra {
             MixerView(model: model)
         } label: {
-            let image = DesignIcon.image("menu-dial")
-            let _ = { image.size = NSSize(width: 18, height: 18); image.isTemplate = false }()
-            Image(nsImage: image).accessibilityLabel("Soundcheck")
+            let image = DesignIcon.image("turntable-mark")
+            let _ = { image.isTemplate = false }()
+            Image(nsImage: image).resizable().scaledToFit().frame(width: 18, height: 18).accessibilityLabel("Soundcheck")
         }.menuBarExtraStyle(.window)
     }
 }

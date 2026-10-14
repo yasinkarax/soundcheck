@@ -82,7 +82,7 @@ struct MixerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 7) {
-                DesignIcon(name: "dial", size: 15).frame(width: 16, height: 16)
+                DesignIcon(name: "turntable-mark", size: 13).frame(width: 16, height: 16)
                 Text("Soundcheck").font(.system(size: 14, weight: .semibold))
                 Spacer()
                 Menu {
