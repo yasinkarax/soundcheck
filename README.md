@@ -8,8 +8,6 @@ Turn down your music, keep a video louder, or mute one app while the others keep
 
 For **Apple silicon Macs (M1 or newer)** running **macOS 14.2 or later**. This download does not support Intel Macs.
 
-Soundcheck is an early beta. You do not need an Apple Developer account or any developer tools to use the download.
-
 ## 1. Install
 
 1. Download the ZIP file using the link above.
@@ -70,26 +68,6 @@ See [Apple’s audio-access guide](https://support.apple.com/guide/mac-help/cont
 
 ## Need help?
 
-**I opened it, but I don’t see a window.**
-
-Look for Soundcheck in the menu bar at the top of your screen. Click its icon to open the volume panel.
-
-**An app is missing or appears more than once.**
-
-Start playing audio and wait a few seconds. Some apps use separate audio processes, which can appear separately. Browser tabs may share one slider.
-
-**The slider does not change the sound.**
-
-Check that audio access is allowed and app controls are turned on in Soundcheck settings. Read any error shown in Soundcheck. If it still fails, try your Mac’s built-in speakers.
-
-**My volume settings disappeared.**
-
-This beta forgets app volume and mute settings when you quit.
-
-**My headphones or speakers don’t work with it.**
-
-Some audio devices are not supported yet. Try built-in speakers or stereo headphones. After switching outputs, allow a few seconds for Soundcheck to catch up.
-
 [Report a problem](https://github.com/yasinkarax/soundcheck/issues). Include your Mac model, macOS version, Soundcheck version, output device, and what happened.
 
 ## Current limits
@@ -98,37 +76,3 @@ Some audio devices are not supported yet. Try built-in speakers or stereo headph
 - Stereo output is required. Some stereo devices are unsupported; compatibility testing is still ongoing.
 - Soundcheck cannot boost an app above 100% or send different apps to different outputs.
 - App volume and mute settings are not saved between launches.
-
-<details>
-<summary><strong>Build from source — for developers</strong></summary>
-
-Requires macOS 14.2 or later, Swift 5.10 or newer, and a macOS SDK with Core Audio taps (14.2 or later). Use a compatible Xcode or Command Line Tools installation.
-
-To install Command Line Tools if needed:
-
-```sh
-xcode-select --install
-```
-
-Then run:
-
-```sh
-git clone https://github.com/yasinkarax/soundcheck.git
-cd soundcheck
-./scripts/build-app.sh
-open dist/Soundcheck.app
-```
-
-The script creates **dist/Soundcheck.app**, **dist/Soundcheck.zip**, and a versioned ZIP. Local builds target the build machine’s architecture by default and are not notarized.
-
-Run the audio-processing checks:
-
-```sh
-./scripts/test-audio.sh
-```
-
-Soundcheck uses SwiftUI, Core Audio process taps, and a C audio callback. The checks cover volume, mute, invalid values, and short buffers with memory-safety checks enabled.
-
-[Apple’s Core Audio taps documentation](https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps)
-
-</details>
