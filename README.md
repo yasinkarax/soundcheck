@@ -1,4 +1,5 @@
 # Soundcheck
+<img width="400" height="112" alt="Soundcheck — Logo" src="https://github.com/user-attachments/assets/5676c6f4-fc03-4c36-899c-5cdf5f1ccd8a" />
 
 **Control each app’s volume from your Mac’s menu bar.**
 
