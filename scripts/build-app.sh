@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-APP_VERSION="0.3.0"
-APP_BUILD="7"
+APP_VERSION="0.4.0"
+APP_BUILD="8"
 if [[ $# -eq 0 ]]; then
   swift build -c release --scratch-path .build
   BIN_DIR="$(swift build -c release --scratch-path .build --show-bin-path)"

@@ -11,6 +11,16 @@ final class MixerPanel: NSPanel {
 @available(macOS 14.2, *)
 final class TransparentMixerHostingView: NSHostingView<MixerView> {
     override var isOpaque: Bool { false }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        invalidateAppearance(in: self)
+    }
+
+    private func invalidateAppearance(in view: NSView) {
+        view.needsDisplay = true
+        for subview in view.subviews { invalidateAppearance(in: subview) }
+    }
 }
 
 /// Owns the panel so AppKit does not add a second popover surface around the design.
@@ -205,7 +215,7 @@ final class MenuBarController: NSObject {
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         let image = renderer.nsImage
         image?.size = NSSize(width: 18, height: 18)
-        image?.isTemplate = false
+        image?.isTemplate = true
         return image
     }
 }

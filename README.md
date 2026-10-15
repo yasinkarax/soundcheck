@@ -2,7 +2,7 @@
 
 **Turn down one app without turning down your whole Mac.**
 
-Soundcheck is a small app that lives in your Mac’s menu bar. It gives each app its own volume slider and mute button—similar to the Windows volume mixer. The compact dark interface also includes a master-volume slider for your current output.
+Soundcheck is a small app that lives in your Mac’s menu bar. It gives each app its own volume slider and mute button—similar to the Windows volume mixer. The interface follows your Mac’s Light or Dark appearance and includes a master-volume slider for your current output.
 
 For example, you can lower your music, keep a video louder, or mute one app while the others keep playing.
 
@@ -11,7 +11,7 @@ For example, you can lower your music, keep a video louder, or mute one app whil
 - A Mac running **macOS 14.2 or later**.
 - Speakers or headphones with stereo output. Some audio devices are not supported yet.
 
-Soundcheck is an early version. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, [download Soundcheck 0.3.0 for macOS](https://github.com/yasinkarax/soundcheck/raw/refs/heads/main/downloads/Soundcheck-0.3.0.zip?download=1) or follow **Build the app** at the end of this page.
+Soundcheck is an early version. If you already have **Soundcheck.app**, skip to **Using Soundcheck** below. Otherwise, [download Soundcheck 0.4.0 for macOS](https://github.com/yasinkarax/soundcheck/raw/refs/heads/main/downloads/Soundcheck-0.4.0.zip?download=1) or follow **Build the app** at the end of this page.
 
 ## Using Soundcheck
 
@@ -33,6 +33,8 @@ If you are replacing an older build, quit Soundcheck first, then open the newly 
 - **Quit:** closes Soundcheck and restores normal playback.
 
 Soundcheck uses your Mac’s current speakers or headphones. It does not choose a different output for each app.
+
+Soundcheck follows **System Settings → Appearance**, including **Auto**. Its colors update immediately when your Mac switches between Light and Dark; you do not need to restart the app.
 
 ## macOS audio access
 

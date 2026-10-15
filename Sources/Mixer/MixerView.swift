@@ -1,28 +1,19 @@
 import SwiftUI
 
-// Raw colors from Figma node 2:3587. The requested design is dark-only.
-enum MixerTheme {
-    static let background = Color(red: 0.043, green: 0.059, blue: 0.078)
-    static let panel = Color(red: 0.11956, green: 0.13428, blue: 0.15176)
-    static let surface = Color.white.opacity(0.06)
-    static let output = Color.white.opacity(0.05)
-    static let text = Color(red: 0.945, green: 0.949, blue: 0.957)
-    static let secondary = Color(red: 0.698, green: 0.714, blue: 0.753)
-    static let muted = Color(red: 0.467, green: 0.490, blue: 0.533)
-    static let accent = Color(red: 0.659, green: 0.780, blue: 1)
-    static let track = Color(red: 0.267, green: 0.282, blue: 0.314)
-}
-
 struct DesignIcon: View {
     let name: String
     var size: CGFloat = 16
+    var tint: Color = MixerTheme.secondary
     static func image(_ name: String) -> NSImage {
         let url = Bundle.module.url(forResource: name, withExtension: "svg", subdirectory: "Resources")
             ?? Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Resources")!
         return NSImage(contentsOf: url)!
     }
     var body: some View {
-        Image(nsImage: Self.image(name)).resizable().scaledToFit().frame(width: size, height: size)
+        let image = Self.image(name)
+        image.isTemplate = true
+        return Image(nsImage: image).renderingMode(.template).resizable().scaledToFit()
+            .frame(width: size, height: size).foregroundStyle(tint)
     }
 }
 
@@ -56,9 +47,11 @@ struct BrandLogoMark: View {
 
     private func layer(_ name: String, width: CGFloat, height: CGFloat, scale: CGFloat) -> some View {
         Image(nsImage: DesignIcon.image(name))
+            .renderingMode(.template)
             .resizable()
             .interpolation(.high)
             .frame(width: width * scale, height: height * scale)
+            .foregroundStyle(name == "logo-vinyl" || name == "logo-groove" ? MixerTheme.accent : MixerTheme.text)
     }
 }
 
@@ -71,11 +64,11 @@ final class MixerSliderCell: NSSliderCell {
         let bounds = controlView?.bounds ?? rect
         let thickness: CGFloat = controlSize == .regular ? 6 : 4
         let bar = NSRect(x: rect.minX, y: bounds.midY - thickness / 2, width: rect.width, height: thickness)
-        NSColor(MixerTheme.track).setFill()
+        MixerTheme.trackColor.setFill()
         NSBezierPath(roundedRect: bar, xRadius: thickness / 2, yRadius: thickness / 2).fill()
         let fraction = CGFloat((doubleValue - minValue) / max(0.001, maxValue - minValue))
         if !isMuted && isEnabled {
-            NSColor(MixerTheme.accent).setFill()
+            MixerTheme.accentColor.setFill()
             NSBezierPath(roundedRect: NSRect(x: bar.minX, y: bar.minY, width: bar.width * fraction, height: thickness), xRadius: thickness / 2, yRadius: thickness / 2).fill()
         }
     }
@@ -84,16 +77,18 @@ final class MixerSliderCell: NSSliderCell {
         let centerY = controlView?.bounds.midY ?? rect.midY
         let knob = NSRect(x: rect.midX - diameter / 2, y: centerY - diameter / 2, width: diameter, height: diameter)
         NSGraphicsContext.saveGraphicsState()
-        if controlSize == .regular {
-            let shadow = NSShadow()
-            shadow.shadowColor = NSColor.black.withAlphaComponent(0.2)
-            shadow.shadowBlurRadius = 3
-            shadow.shadowOffset = NSSize(width: 0, height: -1)
-            shadow.set()
-        }
-        (isMuted || !isEnabled ? NSColor(MixerTheme.secondary) : NSColor(MixerTheme.text)).setFill()
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(controlSize == .regular ? 0.2 : 0.12)
+        shadow.shadowBlurRadius = controlSize == .regular ? 3 : 1
+        shadow.shadowOffset = NSSize(width: 0, height: -1)
+        shadow.set()
+        (isMuted || !isEnabled ? MixerTheme.inactiveThumbColor : MixerTheme.thumbColor).setFill()
         NSBezierPath(ovalIn: knob).fill()
         NSGraphicsContext.restoreGraphicsState()
+        MixerTheme.thumbBorderColor.setStroke()
+        let outline = NSBezierPath(ovalIn: knob.insetBy(dx: 0.25, dy: 0.25))
+        outline.lineWidth = 0.5
+        outline.stroke()
     }
 }
 struct VolumeControl: NSViewRepresentable {
@@ -152,7 +147,7 @@ struct MixerView: View {
             masterVolume
             outputSelector
             if let error = model.error {
-                Text(error).font(.system(size: 11)).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+                Text(error).font(.system(size: 11)).foregroundStyle(MixerTheme.error).fixedSize(horizontal: false, vertical: true)
             }
             if !model.enabled {
                 Text("App controls are off. Turn them on in settings.")
@@ -189,20 +184,19 @@ struct MixerView: View {
         .foregroundStyle(MixerTheme.text)
         .background(MixerTheme.panel)
         .clipShape(RoundedRectangle(cornerRadius: 28))
-        .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(0.12)))
-        .preferredColorScheme(.dark)
+        .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(MixerTheme.panelBorder))
     }
-    private var separator: some View { Rectangle().fill(.white.opacity(0.07)).frame(height: 1) }
+    private var separator: some View { Rectangle().fill(MixerTheme.separator).frame(height: 1) }
     private var outputSelector: some View {
             Button { model.showingOutput.toggle() } label: {
                 HStack(spacing: 9) {
-                    DesignIcon(name: "laptop", size: 17)
+                    DesignIcon(name: "laptop", size: 17, tint: MixerTheme.accent)
                     Text(model.outputName).font(.system(size: 12)).lineLimit(1)
                     Spacer(minLength: 0)
                     DesignIcon(name: "chevron", size: 14)
                 }.padding(.horizontal, 12).frame(height: 40)
                 .background(MixerTheme.output, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.09)))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(MixerTheme.surfaceBorder))
                 .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
             }.buttonStyle(.plain).focusEffectDisabled()
             .accessibilityLabel("Output: \(model.outputName)")
@@ -219,7 +213,7 @@ struct MixerView: View {
     private var masterVolume: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                DesignIcon(name: "master-speaker")
+                DesignIcon(name: "master-speaker", tint: MixerTheme.accent)
                 Text("Master volume").font(.system(size: 13, weight: .semibold))
                 Spacer()
                 if model.masterAvailable {
@@ -228,14 +222,14 @@ struct MixerView: View {
             }.frame(height: 24)
             HStack(spacing: 12) {
                 Button { model.toggleMasterMute() } label: {
-                    DesignIcon(name: model.masterVolume == 0 ? "muted" : "speaker").frame(width: 30, height: 30)
+                    DesignIcon(name: model.masterVolume == 0 ? "muted" : "speaker", tint: model.masterVolume == 0 ? MixerTheme.accent : MixerTheme.secondary).frame(width: 30, height: 30)
                 }.buttonStyle(.plain).focusEffectDisabled().disabled(!model.masterAvailable)
                 .accessibilityLabel(model.masterVolume == 0 ? "Unmute master volume" : "Mute master volume")
                 VolumeControl(value: Binding(get: { model.masterVolume }, set: { model.setMaster($0) }), enabled: model.masterAvailable, large: true, label: "Master volume").frame(height: 24)
             }
         }.padding(16)
         .background(MixerTheme.surface, in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.09)))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MixerTheme.surfaceBorder))
         .shadow(color: .black.opacity(0.10), radius: 12, y: 4)
     }
     private func appRow(_ app: AudioApp) -> some View {
@@ -261,7 +255,7 @@ struct MixerView: View {
             }
             HStack(spacing: 10) {
                 Button { model.toggleMute(app) } label: {
-                    DesignIcon(name: isMuted ? "muted" : "speaker").frame(width: 24, height: 24)
+                    DesignIcon(name: isMuted ? "muted" : "speaker", tint: isMuted ? MixerTheme.accent : MixerTheme.secondary).frame(width: 24, height: 24)
                         .background(isMuted ? MixerTheme.accent.opacity(0.09) : .clear, in: RoundedRectangle(cornerRadius: 6))
                 }.buttonStyle(.plain).focusEffectDisabled().disabled(!model.enabled)
                 .accessibilityLabel("\(isMuted ? "Unmute" : "Mute") \(app.name)")

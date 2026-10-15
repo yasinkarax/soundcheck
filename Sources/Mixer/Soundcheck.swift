@@ -140,21 +140,25 @@ struct SoundcheckApp {
     @MainActor static func main() {
         let application = NSApplication.shared
         application.setActivationPolicy(.accessory)
+        if CommandLine.arguments.contains("--render-preview") || CommandLine.arguments.contains("--preview-ui"),
+           let flag = CommandLine.arguments.firstIndex(of: "--appearance"), CommandLine.arguments.count > flag + 1 {
+            switch CommandLine.arguments[flag + 1] {
+            case "light": application.appearance = NSAppearance(named: .aqua)
+            case "dark": application.appearance = NSAppearance(named: .darkAqua)
+            default: break
+            }
+        }
+        if let flag = CommandLine.arguments.firstIndex(of: "--render-theme-previews"), CommandLine.arguments.count > flag + 1 {
+            do {
+                try MixerPreviewRenderer.exportAppearanceCycle(to: URL(fileURLWithPath: CommandLine.arguments[flag + 1], isDirectory: true))
+                exit(0)
+            } catch { fputs("Theme preview export failed: \(error)\n", stderr); exit(1) }
+        }
         if let flag = CommandLine.arguments.firstIndex(of: "--render-preview"), CommandLine.arguments.count > flag + 1 {
-            let preview = MixerModel(preview: true)
-            let view = TransparentMixerHostingView(rootView: MixerView(model: preview))
-            let size = view.fittingSize
-            view.frame = NSRect(origin: .zero, size: size)
-            let window = MixerPanel(contentRect: view.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            window.hasShadow = true
-            window.contentView = view
-            view.layoutSubtreeIfNeeded()
-            guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
-            view.cacheDisplay(in: view.bounds, to: bitmap)
-            guard let png = bitmap.representation(using: .png, properties: [:]) else { exit(1) }
-            do { try png.write(to: URL(fileURLWithPath: CommandLine.arguments[flag + 1])); exit(0) }
+            do {
+                try MixerPreviewRenderer().export(to: URL(fileURLWithPath: CommandLine.arguments[flag + 1]))
+                exit(0)
+            }
             catch { fputs("Preview export failed: \(error)\n", stderr); exit(1) }
         }
         let delegate = SoundcheckAppDelegate()
