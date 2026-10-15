@@ -5,7 +5,7 @@
 
 Turn down your music, keep a video louder, or mute one app while the others keep playing—similar to the Windows volume mixer.
 
-**[Download Soundcheck 0.4.0](https://raw.githubusercontent.com/yasinkarax/soundcheck/2bcbd282caa8185d9455670673295a75a9778147/downloads/Soundcheck-0.4.0.zip)**
+**[Download Soundcheck 0.4.0](https://github.com/yasinkarax/soundcheck/releases/download/v0.4.0/Soundcheck-0.4.0.zip)**
 
 For **Apple silicon Macs (M1 or newer)** running **macOS 14.2 or later**. This download does not support Intel Macs.
 
@@ -16,7 +16,7 @@ For **Apple silicon Macs (M1 or newer)** running **macOS 14.2 or later**. This d
 3. Drag **Soundcheck.app** into your **Applications** folder.
 4. Open **Soundcheck** from Applications.
 
-**Updating?** Quit the older Soundcheck from its settings menu before replacing it with the new app. Check your version in **Soundcheck settings → About Soundcheck…**.
+**Updating?** Quit the older Soundcheck, drag the new app into Applications, and choose **Replace**. Then open it again. Check your version in **Soundcheck settings → About Soundcheck…**.
 
 ### If macOS says “Apple could not verify Soundcheck”
 
@@ -52,6 +52,14 @@ Open **Soundcheck settings** with the sliders icon at the top right of its panel
 Master-volume changes remain in effect after you reset, turn off, or quit Soundcheck. Use your Mac’s volume controls to change them again.
 
 Soundcheck follows your Mac’s speakers or headphones and its **Light, Dark, or Auto appearance**.
+
+## Get new updates
+
+New versions are announced on [GitHub Releases](https://github.com/yasinkarax/soundcheck/releases), with a download and a short list of changes.
+
+To follow releases on GitHub, sign in at [Soundcheck’s repository](https://github.com/yasinkarax/soundcheck) and select **Watch → Custom → Releases**. GitHub delivers notices according to [your notification settings](https://docs.github.com/en/subscriptions-and-notifications/get-started/configuring-notifications).
+
+Download new versions from the release page and replace the app using the instructions above.
 
 ## Audio access and privacy
 
